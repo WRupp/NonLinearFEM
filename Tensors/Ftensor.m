@@ -1,7 +1,7 @@
 function F = Ftensor(PosicoesNodaisMat,PosicoesNodaisEsp,delNdelX)
     % Calculates de deformation gradient F
 
-    Nnos = size(PosicoesNodaisMat,1);
+    Nnos = size(PosicoesNodaisEsp,1);
 
 
     F = zeros(3);

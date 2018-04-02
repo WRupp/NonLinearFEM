@@ -3,6 +3,6 @@ function [lambda,mu] = Ev2lame(E,v)
 
 	lambda = E*v /((1+v)*(1-2*v));
 
-	mu = E / (2(1+v));
+	mu = E / (2*(1+v));
 
 end

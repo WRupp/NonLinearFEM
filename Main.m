@@ -1,13 +1,15 @@
-clear; close all;
+clear; close all; clc;
 % Determina e adiciona todas as subfolders
-folder = fileparts(which(mfilename)); 
+folder = fileparts(which(mfilename));
 addpath(genpath(folder));
 
 %% Constantes de material
 E = 2e5;
 v = 0.3;
 
-[lambda,mu] = Ev2lame (E,v);
+% [lambda,mu] = Ev2lame (E,v);
+mu = 3.8e2;
+lambda = 5.8e3;
 
 %% Malha
 
@@ -21,25 +23,20 @@ PosicoesNodaisMat =  [1 0 1 0 ;
                       6 1 0 0 ;
                       7 1 0 1 ;
                       8 1 1 1 ] ;
-                  
-          
+
+
 PosicoesNodaisEsp =  [1 0 1 0 ;
                       2 0 0 0 ;
                       3 0 0 1 ;
                       4 0 1 1 ;
-                      5 2 1 0 ;
-                      6 2 0 0 ;
-                      7 2 0 1 ;
-                      8 2 1 1 ];
-                  
-% Tração                  
-                  
-        p = 2;  % [MPa]          
-                  
-                  
-                  
-%% Coisas do Hexa8
-          
+                      5 1.01 1 0 ;
+                      6 1.01 0 0 ;
+                      7 1.01 0 1 ;
+                      8 1.01 1 1 ];
+
+
+%% Coisas para a integracao numerica
+
       P = 1/sqrt(3);
       PontoGauss = [+P +P +P;
                     +P +P -P;
@@ -49,40 +46,53 @@ PosicoesNodaisEsp =  [1 0 1 0 ;
                     -P +P -P;
                     -P -P +P;
                     -P -P -P] ;
-                
-      W(1:8) = 1; 
 
-%% Integração do elemento      
-      Int = 0;
-          
-for i = 1 : 8
-    
-    % Jacobiano
-    J = J_Hex8(PontoGauss(i,1),PontoGauss(i,2),PontoGauss(i,3),PosicoesNodaisMat(:,2:end));
-    
-    % Derivadas das funcoes de forma em X material
-    delNdelX = inv(J)' * Derivadas_Hex8(PontoGauss(i,1),PontoGauss(i,2),PontoGauss(i,3));
-    
-    % Tensor gradiente de mapeamento
-    F = Ftensor(PosicoesNodaisMat(:,2:end),PosicoesNodaisEsp(:,2:end),delNdelX);
-    
-    % Matriz de Derivadas 
-    B = B_Hex8 (PontoGauss(i,1),PontoGauss(i,2),PontoGauss(i,3),PosicoesNodaisEsp(:,2:end));
-    
-    % Matriz tangente do material
-    Cnh = NeoHookean(mu,lambda,F);
-   
-    % Polinomio a ser integrado
-    Polinomio = B' * Cnh * B;
-    
-    % Integracao numerica
-    Int = Int + Polinomio * W(i);
+      W(1:8) = 1;
+
+%% Forcas externas e chute inicial
+
+      Fext = zeros(24,1); % Sem forcas externas
+
+      Mcc = [ 1 0 1;
+              2 0 1;
+              3 0 1;
+              4 0 1;
+              2 0 2;
+              3 0 2;
+              6 0 2;
+              7 0 2;
+              1 0 3;
+              5 0 3;
+              6 0 3;
+              2 0 3;             
+              5 1.2 1;
+              6 1.2 1;
+              7 1.2 1;
+              8 1.2 1];
+
+
+      Fint = NeoHookean_Fint(PontoGauss,W,PosicoesNodaisMat,PosicoesNodaisEsp,mu,lambda);
+      R = Fint - Fext ;
+
+%       Kt = sparse(24);
+
+while(norm(R)>1e-6)
+
+      [Kt] = NeoHookean_Kt(PontoGauss,W,PosicoesNodaisMat,PosicoesNodaisEsp,mu,lambda);
+
+      [Kt,R] = AplicaCC (Kt,R,Mcc,3);
+
+      DeltaU = Kt \ (-R);
+
+      Uorg = organizaU(DeltaU,3,8);
+
+      PosicoesNodaisEsp(:,2:end) = PosicoesNodaisMat(:,2:end) + Uorg;
+
+      Fint = NeoHookean_Fint(PontoGauss,W,PosicoesNodaisMat,PosicoesNodaisEsp,mu,lambda);
+
+      R = Fint - Fext ;
+
 end
-    
-%% Fim  
-          
-           
-           
-           
-           
 
+
+%% Fim
