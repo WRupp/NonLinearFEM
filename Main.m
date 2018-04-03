@@ -8,32 +8,30 @@ E = 2e5;
 v = 0.3;
 
 % [lambda,mu] = Ev2lame (E,v);
-mu = 3.8e2;
-lambda = 5.8e3;
+lambda = 5800;
+mu =380;
 
 %% Malha
 
+ngl = 3;
+
 % Sistema de Unidades [mm,MPa,s]
 
-PosicoesNodaisMat =  [1 0 1 0 ;
+PosicoesNodaisMat =  [1 0 0 1 ;
                       2 0 0 0 ;
-                      3 0 0 1 ;
+                      3 0 1 0 ;
                       4 0 1 1 ;
-                      5 1 1 0 ;
+                      5 1 0 1 ;
                       6 1 0 0 ;
-                      7 1 0 1 ;
+                      7 1 1 0 ;
                       8 1 1 1 ] ;
 
+% PosicoesNodaisMat(:,2:4) =  50 *PosicoesNodaisMat(:,2:4);
+                  
+PosicoesNodaisEsp =  PosicoesNodaisMat;
+% PosicoesNodaisEsp(5:8,2) = 2;
 
-PosicoesNodaisEsp =  [1 0 1 0 ;
-                      2 0 0 0 ;
-                      3 0 0 1 ;
-                      4 0 1 1 ;
-                      5 1.01 1 0 ;
-                      6 1.01 0 0 ;
-                      7 1.01 0 1 ;
-                      8 1.01 1 1 ];
-
+% PosicoesNodaisEsp(:,2:4) =  50 *PosicoesNodaisMat(:,2:4);
 
 %% Coisas para a integracao numerica
 
@@ -57,42 +55,60 @@ PosicoesNodaisEsp =  [1 0 1 0 ;
               2 0 1;
               3 0 1;
               4 0 1;
-              2 0 2;
-              3 0 2;
-              6 0 2;
-              7 0 2;
-              1 0 3;
-              5 0 3;
+              2 0 3;
+              3 0 3;
               6 0 3;
-              2 0 3;             
-              5 1.2 1;
-              6 1.2 1;
-              7 1.2 1;
-              8 1.2 1];
+              7 0 3;
+              1 0 2;
+              5 0 2;
+              6 0 2;
+              2 0 2;];
 
 
-      Fint = NeoHookean_Fint(PontoGauss,W,PosicoesNodaisMat,PosicoesNodaisEsp,mu,lambda);
-      R = Fint - Fext ;
+  Mfn =[ 5 0.1 1;
+         6 0.1 1;
+         7 0.1 1;
+         8 0.1 1];
 
-%       Kt = sparse(24);
 
-while(norm(R)>1e-6)
 
-      [Kt] = NeoHookean_Kt(PontoGauss,W,PosicoesNodaisMat,PosicoesNodaisEsp,mu,lambda);
-
-      [Kt,R] = AplicaCC (Kt,R,Mcc,3);
-
-      DeltaU = Kt \ (-R);
-
-      Uorg = organizaU(DeltaU,3,8);
-
-      PosicoesNodaisEsp(:,2:end) = PosicoesNodaisMat(:,2:end) + Uorg;
-
-      Fint = NeoHookean_Fint(PontoGauss,W,PosicoesNodaisMat,PosicoesNodaisEsp,mu,lambda);
-
-      R = Fint - Fext ;
-
+for i=1:size(Mfn,1)
+    Fext(ngl*(Mfn(i,1)-1) + Mfn(i,3)) = Mfn(i,2);
 end
 
 
+    Fint = NeoHookean_Fint(PontoGauss,W,PosicoesNodaisMat,PosicoesNodaisEsp,mu,lambda);
+     
+    nIncr = 30;
+    Fincr = Fext / nIncr;
+    Fext = Fincr;
+    
+for t = 1 : nIncr
+    
+    Fext =  Fext + Fincr ;
+    R = Fint - Fext ;
+        
+    % Probleminha - Nao se está usando a informacao do ultimo estado de
+    % nenhuma forma para o proximo passo
+    
+    while(norm(R)>1e-6)
+
+          [Kt] = NeoHookean_Kt(PontoGauss,W,PosicoesNodaisMat,PosicoesNodaisEsp,mu,lambda);
+
+          [Kt,R] = AplicaCC (Kt,R,Mcc,3);
+
+          DeltaU = Kt \ (-R);
+
+          Uorg = organizaU(DeltaU,3,8);
+
+          PosicoesNodaisEsp(:,2:end) = PosicoesNodaisEsp(:,2:end) + Uorg;
+          
+          Fint = NeoHookean_Fint(PontoGauss,W,PosicoesNodaisMat,PosicoesNodaisEsp,mu,lambda);
+          
+          R = Fint - Fext ;
+          
+          norm(R)
+          
+    end
+end
 %% Fim
