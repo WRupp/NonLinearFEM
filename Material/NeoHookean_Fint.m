@@ -14,14 +14,14 @@ for i = 1 : 8
     
     % Derivadas das funcoes de forma em X material
     
-    delNdelX = inv(JX)' * Derivadas_Hex8(PontoGauss(i,1),PontoGauss(i,2),PontoGauss(i,3));
+    delNdelX = inv(JX) * Derivadas_Hex8(PontoGauss(i,1),PontoGauss(i,2),PontoGauss(i,3));
     
     % Derivadas das funcoes de forma em x espacial
     
-    delNdelx = inv(Jx)' * Derivadas_Hex8(PontoGauss(i,1),PontoGauss(i,2),PontoGauss(i,3));
+    delNdelx = inv(Jx) * Derivadas_Hex8(PontoGauss(i,1),PontoGauss(i,2),PontoGauss(i,3));
     
     % Tensor gradiente de mapeamento
-    F = Ftensor( PosicoesNodaisMat(:,2:end) , PosicoesNodaisEsp(:,2:end), delNdelX);
+    F = Ftensor2( PosicoesNodaisMat(:,2:end) , PosicoesNodaisEsp(:,2:end), delNdelX);
     
     % Tensor tensao 
     Cauchy = NeoHookeanCauchy (mu,lambda,F);

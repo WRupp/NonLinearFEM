@@ -59,7 +59,7 @@ PosicoesNodaisMat =  [1 0 0 1 ;
               6 0.005 1;
               7 0.005 1;
               8 0.005 1;];
-% %           
+%           
  
 %% Forcas externas 
 
@@ -74,9 +74,9 @@ end
 %% chute inicial
 
     PosicoesNodaisEsp =  PosicoesNodaisMat;
-    PosicoesNodaisEsp(5:8,2) = 1.05;
+    PosicoesNodaisEsp(5:8,2) = 1.005;
 
-    Fint =  NeoHookean_Fint(PontoGauss,W,PosicoesNodaisMat,PosicoesNodaisEsp,mu,lambda);
+    Fint = NeoHookean_Fint(PontoGauss,W,PosicoesNodaisMat,PosicoesNodaisEsp,mu,lambda);
     R = Fint - Fext ;
 
     

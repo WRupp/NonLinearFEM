@@ -10,18 +10,18 @@ function [Kt] = NeoHookean_Kt(PontoGauss,W,PosicoesNodaisMat,PosicoesNodaisEsp,m
         % % Parte Material
 
         % Jacobiano
-
         JX = J_Hex8(PontoGauss(i,1),PontoGauss(i,2),PontoGauss(i,3),PosicoesNodaisMat(:,2:end)); % % Parte Material
         
         Jx = J_Hex8(PontoGauss(i,1),PontoGauss(i,2),PontoGauss(i,3),PosicoesNodaisEsp(:,2:end)); % % Parte Espacial
 
         % Derivadas das funcoes de forma em X material
 
-        delNdelX = transpose(JX) \ Derivadas_Hex8(PontoGauss(i,1),PontoGauss(i,2),PontoGauss(i,3));
+        delNdelX = JX \ Derivadas_Hex8(PontoGauss(i,1),PontoGauss(i,2),PontoGauss(i,3));
+%         delNdelx = transpose(Jx) \ Derivadas_Hex8(PontoGauss(i,1),PontoGauss(i,2),PontoGauss(i,3));
 
         % Tensor gradiente de mapeamento
 
-        F = Ftensor(PosicoesNodaisMat(:,2:end),PosicoesNodaisEsp(:,2:end),delNdelX);         
+        F = Ftensor2(PosicoesNodaisMat(:,2:end),PosicoesNodaisEsp(:,2:end),delNdelX);         
 
         % Matrizes
 
@@ -35,18 +35,22 @@ function [Kt] = NeoHookean_Kt(PontoGauss,W,PosicoesNodaisMat,PosicoesNodaisEsp,m
             Cnh = NeoHookean (mu,lambda,F);
             % Calcula Cauchy
             Cauchy = NeoHookeanCauchy (mu,lambda,F);
-
-        
-
-        %  Mapeamento da Qualificacao do Thiago - pg 83 
-%         [G,B,CauchyMat] = Map_Thiago (PontoGauss(i,1),PontoGauss(i,2),PontoGauss(i,3),PosicoesNodaisEsp(:,2:end),Cauchy);        
-%         Polinomio2 = G' * CauchyMat * G  * det(Jx);       
-
+            
        % Integracao numerica 
        
        PolinomioM = B' * Cnh * B  * det(Jx); 
         
        PolinomioG = G' * Cauchy * G * det(Jx);
+
+        
+
+        %  Mapeamento da Qualificacao do Thiago - pg 83 
+%         [G,B,CauchyMat] = Map_Thiago (PontoGauss(i,1),PontoGauss(i,2),PontoGauss(i,3),PosicoesNodaisEsp(:,2:end),Cauchy);        
+
+%        Polinomio1 = B' * Cnh * B  * det(Jx); 
+%        PolinomioG = G' * CauchyMat * G  * det(Jx);       
+
+
 
        Kt_M = Kt_M + PolinomioM  * W(i);
 
