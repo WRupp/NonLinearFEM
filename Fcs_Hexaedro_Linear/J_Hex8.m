@@ -5,12 +5,12 @@ function [J] = J_Hex8(e1,e2,e3,PosicoesNodais)
 	% Y é o vetor coluna de coordenadas nodais y
     % Definicao da Jacobiana
 
-	%J(:,1) = Psi*X; 
-    
+	%J(:,1) = Psi*X;
+
 	%Derivadas das funcoes de forma
 	Psi = Derivadas_Hex8(e1,e2,e3);
-    
+
     % Jacobiana
-	J = Psi*PosicoesNodais;
-    
+	J = (Psi*PosicoesNodais)';
+
 end

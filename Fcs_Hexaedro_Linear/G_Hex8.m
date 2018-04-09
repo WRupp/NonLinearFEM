@@ -1,32 +1,25 @@
-function G = G_Hex8 (e1,e2,e3,PosicoesNodais)
+function G = G_Hex8 (Derivadas)
     % Cakcula a matriz de derivadas para a parte material
 
-    % Calculo do Jacobiano
-
-	J = J_Hex8(e1,e2,e3,PosicoesNodais);
-
-	% Derivadas em termos de e1 e e2
-
-	Psi = Derivadas_Hex8(e1,e2,e3);
-
-	% Derivadas em termos de x e y
-
-	Deriv = J \ Psi;
-
-   S = size(Deriv);
-   Dim = S(1);
-   NfuncoesInterpolacao = S(2);
-   G = zeros(Dim,Dim*NfuncoesInterpolacao); 
 
 
-  for j = 1 : size(Deriv,2)
+   G = [ Derivadas(1,1) 0 0 Derivadas(1,2) 0 0 Derivadas(1,3) 0 0 Derivadas(1,4) 0 0 ...
+         Derivadas(1,5) 0 0 Derivadas(1,6) 0 0 Derivadas(1,7) 0 0 Derivadas(1,8) 0 0 ;
+         Derivadas(2,1) 0 0 Derivadas(2,2) 0 0 Derivadas(2,3) 0 0 Derivadas(2,4) 0 0 ...
+         Derivadas(2,5) 0 0 Derivadas(2,6) 0 0 Derivadas(2,7) 0 0 Derivadas(2,8) 0 0 ;
+         Derivadas(3,1) 0 0 Derivadas(3,2) 0 0 Derivadas(3,3) 0 0 Derivadas(3,4) 0 0 ...
+         Derivadas(3,5) 0 0 Derivadas(3,6) 0 0 Derivadas(3,7) 0 0 Derivadas(3,8) 0 0 ;
+         0 Derivadas(1,1) 0 0 Derivadas(1,2) 0 0 Derivadas(1,3) 0 0 Derivadas(1,4) 0 ...
+         0 Derivadas(1,5) 0 0 Derivadas(1,6) 0 0 Derivadas(1,7) 0 0 Derivadas(1,8) 0 ;
+         0 Derivadas(2,1) 0 0 Derivadas(2,2) 0 0 Derivadas(2,3) 0 0 Derivadas(2,4) 0 ...
+         0 Derivadas(2,5) 0 0 Derivadas(2,6) 0 0 Derivadas(2,7) 0 0 Derivadas(2,8) 0 ;
+         0 Derivadas(3,1) 0 0 Derivadas(3,2) 0 0 Derivadas(3,3) 0 0 Derivadas(3,4) 0 ...
+         0 Derivadas(3,5) 0 0 Derivadas(3,6) 0 0 Derivadas(3,7) 0 0 Derivadas(3,8) 0 ;
+         0 0 Derivadas(1,1) 0 0 Derivadas(1,2) 0 0 Derivadas(1,3) 0 0 Derivadas(1,4) ...
+         0 0 Derivadas(1,5) 0 0 Derivadas(1,6) 0 0 Derivadas(1,7) 0 0 Derivadas(1,8) ;
+         0 0 Derivadas(2,1) 0 0 Derivadas(2,2) 0 0 Derivadas(2,3) 0 0 Derivadas(2,4) ...
+         0 0 Derivadas(2,5) 0 0 Derivadas(2,6) 0 0 Derivadas(2,7) 0 0 Derivadas(2,8) ;
+         0 0 Derivadas(3,1) 0 0 Derivadas(3,2) 0 0 Derivadas(3,3) 0 0 Derivadas(3,4) ...
+         0 0 Derivadas(3,5) 0 0 Derivadas(3,6) 0 0 Derivadas(3,7) 0 0 Derivadas(3,8) ;];
 
-    Gzinho = [Deriv(1,j) 0        0             ;
-              0        Deriv(2,j) 0             ;
-              0        0             Deriv(3,j) ];
-
-
-    G(1:Dim, 1+(j-1)*Dim : j*Dim ) = Gzinho;
-
-  end
 end

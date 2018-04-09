@@ -1,119 +1,121 @@
-clear; close all; clc;
+clear; close all; 
 % Determina e adiciona todas as subfolders
 folder = fileparts(which(mfilename));
 addpath(genpath(folder));
 
 %% Constantes de material
-E = 2e5;
-v = 0.3;
-
-% [lambda,mu] = Ev2lame (E,v);
 lambda = 5800;
 mu =380;
 
-%% Malha
-
-ngl = 3;
-
-% Sistema de Unidades [mm,MPa,s]
-
-PosicoesNodaisMat =  [1 0 0 1 ;
-                      2 0 0 0 ;
-                      3 0 1 0 ;
-                      4 0 1 1 ;
-                      5 1 0 1 ;
-                      6 1 0 0 ;
-                      7 1 1 0 ;
-                      8 1 1 1 ] ;
 
 
-%% Coisas para a integracao numerica
+%% Malha % Sistema de Unidades [mm,MPa,s]
 
-      P = 1/sqrt(3);
-      PontoGauss = [+P +P +P;
-                    +P +P -P;
-                    +P -P +P;
-                    +P -P -P;
-                    -P +P +P;
-                    -P +P -P;
-                    -P -P +P;
-                    -P -P -P] ;
+      ngl = 3;
 
-      W(1:8) = 1;
+                         
 
-%% Condicoes de contorno
+      Ncoord =             [1 0 0 1 ;
+                            2 0 0 0 ;
+                            3 0 1 0 ;
+                            4 0 1 1 ;
+                            5 1 0 1 ;
+                            6 1 0 0 ;
+                            7 1 1 0 ;
+                            8 1 1 1 ] ;
+                   
+      Ncoord = sortrows(Ncoord); % Para garantir que estejam em ordem                  
 
+      % Conectividade
+      Nconec = [ 1 1 2 3 4 5 6 7 8];
+
+        i = 1 ; % só tem um elemento
+        cont = 1;
+      for j = 2 : size(Nconec,2);
+      Nno = Nconec(i,j);   
+      PosicoesNodaisMat(cont,:) = Ncoord(Nno,:);  
+      cont = cont+1;
+      end      
+    
+      
+%       PosicoesNodaisEsp = PosicoesNodaisMat;
+%       PosicoesNodaisEsp(:,2) = 1.020*PosicoesNodaisMat(:,2);      
+      
+      % Matriz das CC - 
       Mcc = [ 1 0 1;
               2 0 1;
               3 0 1;
               4 0 1;
               1 0 2;
+              2 0 2;
               5 0 2;
               6 0 2;
-              2 0 2;
               2 0 3;
               3 0 3;
               6 0 3;
-              7 0 3;
-              5 0.005 1;
-              6 0.005 1;
-              7 0.005 1;
-              8 0.005 1;];
-% %           
+              7 0 3;];
+   
  
-%% Forcas externas 
-
-      Fext = zeros(24,1); % Sem forcas externas          
-          
-    Mfn = [];
-
-for i=1:size(Mfn,1)
-    Fext(ngl*(Mfn(i,1)-1) + Mfn(i,3)) = Mfn(i,2);
-end
-
-%% chute inicial
-
-    PosicoesNodaisEsp =  PosicoesNodaisMat;
-    PosicoesNodaisEsp(5:8,2) = 1.05;
-
-    Fint =  NeoHookean_Fint(PontoGauss,W,PosicoesNodaisMat,PosicoesNodaisEsp,mu,lambda);
-    R = Fint - Fext ;
-
+    F_ext = zeros(24,1);
+    F_ext_Incr = zeros(24,1);
     
-    [Kt] = NeoHookean_Kt(PontoGauss,W,PosicoesNodaisMat,PosicoesNodaisEsp,mu,lambda);
-
-    [Kt,R] = AplicaCC (Kt,R,Mcc,3);
-     
-    nIncr = 30;
-%     Fincr = Fext / nIncr;
-%     Fext = Fincr;
-%     
-
+    globalDOF = globalDOF([5 6 7 8],1,ngl);
+%     F_ext(globalDOF) = 200;
+ 
     
-% for t = 1 : nIncr
+    %Variacoes de Deslocamento preescritos
+    Mcc = [ Mcc;
+            5 0 1;
+            6 0 1;
+            7 0 1;
+            8 0 1];
     
+    % Deslocamento preescrito    
+    L = zeros(size(PosicoesNodaisMat(:,2:end))); 
+    L([5 6 7 8],1)= 1 ;
         
-    % Probleminha - Nao se está usando a informacao do ultimo estado de
-    % nenhuma forma para o proximo passo
+    incrDiv = 100;
+    deltaForca = F_ext ./ incrDiv;
+    deltaDisp = L ./ incrDiv;
     
-    while(norm(R)>1e-6)
+       
+              
+% Loop Newton 
 
-          [Kt] = NeoHookean_Kt(PontoGauss,W,PosicoesNodaisMat,PosicoesNodaisEsp,mu,lambda);
+   U = zeros(size(PosicoesNodaisMat(:,2:end)));
+   PosicoesNodaisEsp = PosicoesNodaisMat;
+   PosicoesNodaisEsp(:,2:end) = PosicoesNodaisEsp(:,2:end) + U;
+  
+    
+for t = 1 : incrDiv  
+    
+    U =  U  + deltaDisp;
+    F_ext_Incr = F_ext_Incr + deltaForca ;
+    
+    R = ones(24,1);    
+    
+    cont = 1;
+       
+   while( norm(R)> 1e-6 )
+       
+        [Kt_elem,R] = LinearizedEquilibrium(PosicoesNodaisMat , PosicoesNodaisEsp, mu, lambda, F_ext_Incr);       
+        
+        [Kt_elem,R] = AplicaCC (Kt_elem , R , Mcc , 3);            
 
-          [Kt,R] = AplicaCC (Kt,R,Mcc,3);
+        DeltaU = - Kt_elem \ R ;
 
-          DeltaU = Kt \ (-R);
-
-          Uorg = organizaU(DeltaU,3,8);
-
-          PosicoesNodaisEsp(:,2:end) = PosicoesNodaisEsp(:,2:end) + Uorg;
+        DeltaU_org = organizaU(DeltaU,ngl,8);
           
-          Fint = NeoHookean_Fint(PontoGauss,W,PosicoesNodaisMat,PosicoesNodaisEsp,mu,lambda);
-          
-          R = Fint - Fext ;
-          
-          norm(R)
-          
-    end
-% end
-%% Fim
+        U = U + DeltaU_org;
+
+        PosicoesNodaisEsp(:,2:end) = PosicoesNodaisMat(:,2:end) + U;
+        
+        cont = cont+1;
+        
+        norm(R)
+                  
+   end 
+end      
+
+      
+      
