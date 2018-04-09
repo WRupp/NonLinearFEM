@@ -1,4 +1,4 @@
-clear; close all; 
+clear; close all;
 % Determina e adiciona todas as subfolders
 folder = fileparts(which(mfilename));
 addpath(genpath(folder));
@@ -13,7 +13,7 @@ mu =380;
 
       ngl = 3;
 
-                         
+
 
       Ncoord =             [1 0 0 1 ;
                             2 0 0 0 ;
@@ -23,25 +23,22 @@ mu =380;
                             6 1 0 0 ;
                             7 1 1 0 ;
                             8 1 1 1 ] ;
-                   
-      Ncoord = sortrows(Ncoord); % Para garantir que estejam em ordem                  
+
+      Ncoord = sortrows(Ncoord); % Para garantir que estejam em ordem
 
       % Conectividade
       Nconec = [ 1 1 2 3 4 5 6 7 8];
 
-        i = 1 ; % s� tem um elemento
+        i = 1 ; % s� tem um elemento
         cont = 1;
       for j = 2 : size(Nconec,2);
-      Nno = Nconec(i,j);   
-      PosicoesNodaisMat(cont,:) = Ncoord(Nno,:);  
+      Nno = Nconec(i,j);
+      PosicoesNodaisMat(cont,:) = Ncoord(Nno,:);
       cont = cont+1;
-      end      
-    
-      
-%       PosicoesNodaisEsp = PosicoesNodaisMat;
-%       PosicoesNodaisEsp(:,2) = 1.020*PosicoesNodaisMat(:,2);      
-      
-      % Matriz das CC - 
+      end
+
+%% Condicoes de Contorno (CC)
+      % Matriz das CC -
       Mcc = [ 1 0 1;
               2 0 1;
               3 0 1;
@@ -54,68 +51,70 @@ mu =380;
               3 0 3;
               6 0 3;
               7 0 3;];
-   
- 
+
+      %Variacoes de Deslocamento preescritos
+
+      %Nota : Mcc e U_prescrito devem estar concordantes. Assim como
+      % onde há desloc não ha força_ext e vice-versa
+
+      Mcc = [ Mcc;
+              5 0 1;
+              6 0 1;
+              7 0 1;
+              8 0 1];
+      % Deslocamento preescrito
+      U_prescrito = zeros(size(PosicoesNodaisMat(:,2:end)));
+      U_prescrito ([5 6 7 8],1)= 1 ;
+
+      % Forcas Externas
+
     F_ext = zeros(24,1);
     F_ext_Incr = zeros(24,1);
-    
+
     globalDOF = globalDOF([5 6 7 8],1,ngl);
 %     F_ext(globalDOF) = 200;
- 
-    
-    %Variacoes de Deslocamento preescritos
-    Mcc = [ Mcc;
-            5 0 1;
-            6 0 1;
-            7 0 1;
-            8 0 1];
-    
-    % Deslocamento preescrito    
-    L = zeros(size(PosicoesNodaisMat(:,2:end))); 
-    L([5 6 7 8],1)= 1 ;
-        
+
+  % Definicao dos Incrementos de forca e/ou deslocamento
+
     incrDiv = 100;
     deltaForca = F_ext ./ incrDiv;
-    deltaDisp = L ./ incrDiv;
-    
-       
-              
-% Loop Newton 
+    deltaDisp = U_prescrito ./ incrDiv;
+
+  % Chute Inicial
 
    U = zeros(size(PosicoesNodaisMat(:,2:end)));
    PosicoesNodaisEsp = PosicoesNodaisMat;
-   PosicoesNodaisEsp(:,2:end) = PosicoesNodaisEsp(:,2:end) + U;
-  
-    
-for t = 1 : incrDiv  
-    
+   PosicoesNodaisEsp(:,2:end) = PosicoesNodaisMat(:,2:end) + U;
+
+
+% Loop Newton
+
+for t = 1 : incrDiv
+
     U =  U  + deltaDisp;
     F_ext_Incr = F_ext_Incr + deltaForca ;
-    
-    R = ones(24,1);    
-    
+
+    R = ones(24,1);
+
     cont = 1;
-       
+
    while( norm(R)> 1e-6 )
-       
-        [Kt_elem,R] = LinearizedEquilibrium(PosicoesNodaisMat , PosicoesNodaisEsp, mu, lambda, F_ext_Incr);       
-        
-        [Kt_elem,R] = AplicaCC (Kt_elem , R , Mcc , 3);            
+
+        [Kt_elem,R] = LinearizedEquilibrium(PosicoesNodaisMat , PosicoesNodaisEsp, mu, lambda, F_ext_Incr);
+
+        [Kt_elem,R] = AplicaCC (Kt_elem , R , Mcc , 3);
 
         DeltaU = - Kt_elem \ R ;
 
         DeltaU_org = organizaU(DeltaU,ngl,8);
-          
+
         U = U + DeltaU_org;
 
         PosicoesNodaisEsp(:,2:end) = PosicoesNodaisMat(:,2:end) + U;
-        
-        cont = cont+1;
-        
-        norm(R)
-                  
-   end 
-end      
 
-      
-      
+        cont = cont+1;
+
+        norm(R)
+
+   end
+end
