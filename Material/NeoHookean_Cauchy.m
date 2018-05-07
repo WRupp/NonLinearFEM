@@ -1,4 +1,4 @@
-  function Cauchy = NeoHookeanCauchy (mu,lambda,Ftensor)
+  function Cauchy = NeoHookean_Cauchy (mu,lambda,Ftensor)
     % Calcula o segundo tensor de piola-kirchhoff S para o modelo NeoHookean de
     % Material
 

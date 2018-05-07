@@ -38,7 +38,7 @@ mu =380;
       end
 
 %% Condicoes de Contorno (CC)
-      % Matriz das CC -
+      % Matriz das Variacoes de deslocamento preescritas
       Mcc = [ 1 0 1;
               2 0 1;
               3 0 1;
@@ -57,14 +57,17 @@ mu =380;
       %Nota : Mcc e U_prescrito devem estar concordantes. Assim como
       % onde há desloc não ha força_ext e vice-versa
 
+      % Deslocamento preescrito
+
+      U_prescrito = zeros(size(PosicoesNodaisMat(:,2:end)));
+
       Mcc = [ Mcc;
               5 0 1;
               6 0 1;
               7 0 1;
               8 0 1];
-      % Deslocamento preescrito
-      U_prescrito = zeros(size(PosicoesNodaisMat(:,2:end)));
-      U_prescrito ([5 6 7 8],1)= 1 ;
+
+      U_prescrito ([5 6 7 8],1)= .5 ;
 
       % Forcas Externas
 
@@ -87,18 +90,21 @@ mu =380;
    PosicoesNodaisEsp(:,2:end) = PosicoesNodaisMat(:,2:end) + U;
 
 
+
+
+
 % Loop Newton
+R = ones(24,1);
+
 
 for t = 1 : incrDiv
 
     U =  U  + deltaDisp;
     F_ext_Incr = F_ext_Incr + deltaForca ;
 
-    R = ones(24,1);
-
     cont = 1;
 
-   while( norm(R)> 1e-6 )
+   while( norm(R)> 1e-5 )
 
         [Kt_elem,R] = LinearizedEquilibrium(PosicoesNodaisMat , PosicoesNodaisEsp, mu, lambda, F_ext_Incr);
 
@@ -116,5 +122,14 @@ for t = 1 : incrDiv
 
         norm(R)
 
+
    end
+
+
+        NiterConvergir(t) = cont;
+        R = ones(24,1);
+
 end
+
+plot(0:1,0:1)
+ans = 3

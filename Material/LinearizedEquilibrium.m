@@ -25,11 +25,11 @@ function [Kt_elem,R] = LinearizedEquilibrium(PosicoesNodaisMat,PosicoesNodaisEsp
       
       % Mapeamento Material
       JacobMat = J_Hex8(PontoGauss(i,1),PontoGauss(i,2),PontoGauss(i,3),PosicoesNodaisMat(:,2:end));
-      delNdelXMat = transpose(JacobMat) \ Derivadas_Hex8(PontoGauss(i,1),PontoGauss(i,2),PontoGauss(i,3));  % J^{-T} delNdelE
+      delNdelXMat = JacobMat' \ Derivadas_Hex8(PontoGauss(i,1),PontoGauss(i,2),PontoGauss(i,3));  % J^{-T} delNdelE
     
       % Mapeamento Espacial
       JacobEsp = J_Hex8(PontoGauss(i,1),PontoGauss(i,2),PontoGauss(i,3),PosicoesNodaisEsp(:,2:end));
-      delNdelxEsP = transpose(JacobEsp) \ Derivadas_Hex8(PontoGauss(i,1),PontoGauss(i,2),PontoGauss(i,3));  % J^{-T} delNdelE
+      delNdelxEsP = JacobEsp' \ Derivadas_Hex8(PontoGauss(i,1),PontoGauss(i,2),PontoGauss(i,3));  % J^{-T} delNdelE
     
       
       % Parte do Material
@@ -44,7 +44,7 @@ function [Kt_elem,R] = LinearizedEquilibrium(PosicoesNodaisMat,PosicoesNodaisEsp
       
       B = B_Hex8 (delNdelxEsP);
       G = G_Hex8 (delNdelxEsP);
-      D = D_Hex8(mu,lambda,F);   % Matriz Elasticidade NeoHookean
+      D = D_Hex8 (mu,lambda,F);   % Matriz Elasticidade NeoHookean
            
       
       %Integração Numerica
