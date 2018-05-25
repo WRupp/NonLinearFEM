@@ -1,4 +1,5 @@
 # NonLinearFEM
+### Work in progress
 
 Non-Linear FEM using a Newton-Raphson iterative scheme.
 
