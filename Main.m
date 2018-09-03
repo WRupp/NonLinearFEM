@@ -131,5 +131,3 @@ for t = 1 : incrDiv
 
 end
 
-plot(0:1,0:1)
-ans = 3
