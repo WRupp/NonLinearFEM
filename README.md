@@ -1,5 +1,5 @@
 # NonLinearFEM
-##### (Work in progress)
+##### Educational pourposes only
 
 Non-Linear FEM using a Newton-Raphson iterative scheme.
 
